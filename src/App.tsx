@@ -1,10 +1,16 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Sparkles } from 'lucide-react';
-import type { ConfidenceLevel, FilterState, Problem } from './types/problem';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Sparkles, Command } from 'lucide-react';
+import {
+  type ConfidenceLevel,
+  CONFIDENCE_CONFIG,
+  type FilterState,
+  type Problem,
+} from './types/problem';
 import { useProblems } from './hooks/useProblems';
 import { useTheme } from './hooks/useTheme';
 import { useStopwatch } from './hooks/useStopwatch';
 import { diffInDays, getTodayISO } from './utils/spacedRepetition';
+import { exportDatabaseToJson, exportProblemsToCsv } from './utils/exportImport';
 import { Navbar } from './components/Navbar';
 import { DashboardStats } from './components/DashboardStats';
 import { Heatmap90Days } from './components/Heatmap90Days';
@@ -18,6 +24,8 @@ import { QuickRevisionModal } from './components/QuickRevisionModal';
 import { FlashcardReviewModal } from './components/FlashcardReviewModal';
 import { DataSyncModal } from './components/DataSyncModal';
 import { StopwatchFloating } from './components/StopwatchFloating';
+import { ToastContainer, type ToastMessage, type ToastType } from './components/ToastContainer';
+import { CommandPaletteModal } from './components/CommandPaletteModal';
 
 export default function App() {
   const {
@@ -50,6 +58,24 @@ export default function App() {
     elapsedMinutes,
   } = useStopwatch();
 
+  // Toast Notification State
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+
+  const pushToast = useCallback(
+    (title: string, description?: string, type: ToastType = 'success') => {
+      const id = 'toast_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+      setToasts((prev) => [...prev, { id, title, description, type }]);
+      setTimeout(() => {
+        setToasts((prev) => prev.filter((t) => t.id !== id));
+      }, 3900);
+    },
+    []
+  );
+
+  const dismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
   // Filter & View states
   const [filter, setFilter] = useState<FilterState>({
     search: '',
@@ -72,13 +98,30 @@ export default function App() {
   const [quickRevisionProblem, setQuickRevisionProblem] = useState<Problem | null>(null);
   const [isFlashcardsOpen, setIsFlashcardsOpen] = useState<boolean>(false);
   const [isDataModalOpen, setIsDataModalOpen] = useState<boolean>(false);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState<boolean>(false);
 
-  // Keyboard shortcut listener
+  // Global Keyboard Shortcuts (Ctrl+K, N, F, T, V, /)
   useEffect(() => {
     const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      // Don't trigger if user is focused inside an input/textarea
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen((prev) => !prev);
+        return;
+      }
+
       const tag = (e.target as HTMLElement).tagName;
       if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tag)) {
+        return;
+      }
+
+      if (
+        isAddEditModalOpen ||
+        isDetailModalOpen ||
+        isQuickRevisionOpen ||
+        isFlashcardsOpen ||
+        isDataModalOpen ||
+        isCommandPaletteOpen
+      ) {
         return;
       }
 
@@ -86,6 +129,15 @@ export default function App() {
         e.preventDefault();
         setEditingProblem(null);
         setIsAddEditModalOpen(true);
+      } else if (e.key.toLowerCase() === 'f' && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        setIsFlashcardsOpen(true);
+      } else if (e.key.toLowerCase() === 't' && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        toggleTheme();
+      } else if (e.key.toLowerCase() === 'v' && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        setViewMode((prev) => (prev === 'table' ? 'cards' : 'table'));
       } else if (e.key === '/') {
         e.preventDefault();
         const searchInput = document.querySelector('input[type="text"]') as HTMLInputElement;
@@ -95,7 +147,15 @@ export default function App() {
 
     window.addEventListener('keydown', handleGlobalKeyDown);
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
-  }, []);
+  }, [
+    isAddEditModalOpen,
+    isDetailModalOpen,
+    isQuickRevisionOpen,
+    isFlashcardsOpen,
+    isDataModalOpen,
+    isCommandPaletteOpen,
+    toggleTheme,
+  ]);
 
   // Filter & Sort Logic
   const filteredProblems = useMemo(() => {
@@ -103,7 +163,6 @@ export default function App() {
 
     return problems
       .filter((p) => {
-        // Full text search
         if (filter.search.trim()) {
           const q = filter.search.toLowerCase();
           const matchTitle = p.title.toLowerCase().includes(q);
@@ -125,27 +184,22 @@ export default function App() {
           }
         }
 
-        // Pattern filter
         if (filter.pattern && !p.patterns.includes(filter.pattern)) {
           return false;
         }
 
-        // Difficulty filter
         if (filter.difficulty && p.difficulty !== filter.difficulty) {
           return false;
         }
 
-        // Confidence filter
         if (filter.confidence && String(p.confidence) !== filter.confidence) {
           return false;
         }
 
-        // Platform filter
         if (filter.platform && p.platform !== filter.platform) {
           return false;
         }
 
-        // Status filter
         if (filter.status) {
           const diff = diffInDays(p.nextRevisionDate, today);
           if (filter.status === 'overdue' && diff >= 0) return false;
@@ -161,7 +215,6 @@ export default function App() {
 
         switch (filter.sortBy) {
           case 'nextRevision': {
-            // Sort soonest next revision first (most overdue first)
             const diffA = diffInDays(a.nextRevisionDate, todayStr);
             const diffB = diffInDays(b.nextRevisionDate, todayStr);
             return diffA - diffB;
@@ -182,22 +235,19 @@ export default function App() {
       });
   }, [problems, filter]);
 
-  // Flashcards queue: problems due today or overdue
   const flashcardQueue = useMemo(() => {
     const today = getTodayISO();
     const dueItems = problems.filter((p) => diffInDays(p.nextRevisionDate, today) <= 0);
-    // If none are due today, allow reviewing any problem
     return dueItems.length > 0 ? dueItems : problems;
   }, [problems]);
 
-  // All distinct patterns for filter dropdown
   const availablePatterns = useMemo(() => {
     const set = new Set<string>();
     problems.forEach((p) => p.patterns.forEach((pat) => set.add(pat)));
     return Array.from(set);
   }, [problems]);
 
-  // Action handlers
+  // Action handlers with Toast Notifications
   const handleOpenAddModal = (withTimerMinutes?: number) => {
     setEditingProblem(null);
     setIsAddEditModalOpen(true);
@@ -214,11 +264,26 @@ export default function App() {
   const handleSaveProblem = (formData: any) => {
     if (editingProblem) {
       updateProblem(editingProblem.id, formData);
+      pushToast('Problem Updated', `"${formData.title}" has been saved to your vault.`);
     } else {
       addProblem(formData);
+      pushToast(
+        'Problem Added to Vault',
+        `"${formData.title}" scheduled for spaced repetition.`
+      );
     }
     setIsAddEditModalOpen(false);
     setEditingProblem(null);
+  };
+
+  const handleDeleteProblem = (id: string) => {
+    const target = problems.find((p) => p.id === id);
+    deleteProblem(id);
+    pushToast(
+      'Problem Removed',
+      target ? `"${target.title}" was deleted.` : 'Problem deleted.',
+      'warning'
+    );
   };
 
   const handleOpenQuickRevision = (problem: Problem) => {
@@ -232,7 +297,15 @@ export default function App() {
     solveTimeMinutes?: number,
     revisionNote?: string
   ) => {
+    const target = problems.find((p) => p.id === id);
     logRevision(id, newConfidence, solveTimeMinutes, revisionNote);
+    const confMeta = CONFIDENCE_CONFIG[newConfidence];
+    pushToast(
+      `Revision Logged (+${confMeta.intervalDays}d)`,
+      target
+        ? `${target.title} rated Lvl ${newConfidence} (${confMeta.label}).`
+        : `Scheduled +${confMeta.intervalDays} days out.`
+    );
   };
 
   const handleOpenDetailModal = (problem: Problem) => {
@@ -264,18 +337,27 @@ export default function App() {
       platform: '',
       sortBy: 'nextRevision',
     });
+    pushToast('Filters Cleared', 'Showing all problems in your vault.', 'info');
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col selection:bg-emerald-500/20 selection:text-emerald-300">
+    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-[#09090b] dark:text-zinc-100 flex flex-col selection:bg-emerald-500/20 selection:text-emerald-600 dark:selection:text-emerald-300 transition-colors duration-200">
       {/* Top Navigation */}
       <Navbar
         problems={problems}
         isDark={isDark}
-        onToggleTheme={toggleTheme}
+        onToggleTheme={() => {
+          toggleTheme();
+          pushToast(
+            isDark ? 'Light Mode Enabled' : 'Dark Mode Enabled',
+            'Theme preference saved locally.',
+            'info'
+          );
+        }}
         onOpenAddModal={() => handleOpenAddModal()}
         onOpenDataModal={() => setIsDataModalOpen(true)}
         onOpenFlashcards={() => setIsFlashcardsOpen(true)}
+        onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
         onFilterDueToday={handleFilterDueToday}
         fileSyncStatus={fileSyncStatus}
         syncedFileName={syncedFileName}
@@ -307,31 +389,35 @@ export default function App() {
 
         {/* Problem Explorer Section Header */}
         <div className="pt-2 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800 pb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-zinc-800 pb-3.5">
             <div>
-              <h2 className="text-lg font-bold tracking-tight text-zinc-100 flex items-center gap-2">
+              <h2 className="text-lg font-extrabold tracking-tight text-slate-900 dark:text-zinc-100 flex items-center gap-2">
                 <span>Problem Mastery Vault</span>
-                <span className="text-xs font-mono px-2 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400">
+                <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-slate-200/80 dark:bg-zinc-900 border border-slate-300/60 dark:border-zinc-800 text-slate-700 dark:text-zinc-400">
                   {problems.length} total
                 </span>
               </h2>
-              <p className="text-xs text-zinc-400 mt-0.5">
-                Search, filter, inspect full code & notes, or log instant spaced revisions
+              <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+                Search, filter, inspect full code & notes, or press{' '}
+                <kbd className="px-1.5 py-0.2 rounded bg-slate-200/70 dark:bg-zinc-800 font-mono text-[10px]">
+                  Ctrl K
+                </kbd>{' '}
+                for instant commands
               </p>
             </div>
 
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setIsFlashcardsOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-200 text-xs font-semibold transition"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 text-xs font-bold transition shadow-2xs"
               >
-                <Sparkles className="h-3.5 w-3.5 text-emerald-400" />
-                <span>Spaced Review Queue</span>
+                <Sparkles className="h-3.5 w-3.5 text-emerald-500" />
+                <span>3D Flashcard Deck (F)</span>
               </button>
 
               <button
                 onClick={() => handleOpenAddModal()}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-bold transition shadow-xs"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-extrabold transition shadow-sm shadow-emerald-500/20"
               >
                 <span>+ Add Problem (N)</span>
               </button>
@@ -357,8 +443,11 @@ export default function App() {
               onOpenQuickRevision={handleOpenQuickRevision}
               onOpenDetailModal={handleOpenDetailModal}
               onOpenEditModal={handleOpenEditModal}
-              onDeleteProblem={deleteProblem}
+              onDeleteProblem={handleDeleteProblem}
               onFilterPattern={handleSelectPattern}
+              onCopyCodeNotify={(title) =>
+                pushToast('Code Copied to Clipboard', `Copied solution for "${title}".`, 'info')
+              }
             />
           ) : (
             <ProblemCardGrid
@@ -366,7 +455,7 @@ export default function App() {
               onOpenQuickRevision={handleOpenQuickRevision}
               onOpenDetailModal={handleOpenDetailModal}
               onOpenEditModal={handleOpenEditModal}
-              onDeleteProblem={deleteProblem}
+              onDeleteProblem={handleDeleteProblem}
               onFilterPattern={handleSelectPattern}
             />
           )}
@@ -382,41 +471,81 @@ export default function App() {
         onLogWithTimer={() => handleOpenAddModal(elapsedMinutes)}
       />
 
+      {/* Sleek Toast Notification Stack */}
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+
       {/* Footer */}
-      <footer className="mt-auto border-t border-zinc-900 py-6 text-center text-xs text-zinc-500">
+      <footer className="mt-auto border-t border-slate-200/80 dark:border-zinc-900 py-6 text-center text-xs text-slate-500 dark:text-zinc-500">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <span>DSA Mastery & Spaced Repetition Tracker</span>
+            <span className="font-semibold text-slate-700 dark:text-zinc-300">
+              DSA Mastery & Spaced Repetition Tracker
+            </span>
             <span>•</span>
-            <span className="text-zinc-600">Local-First Architecture</span>
+            <span>100% Local-First Architecture</span>
           </div>
 
-          <div className="flex items-center gap-4 text-zinc-400">
+          <div className="flex items-center gap-4 text-slate-500 dark:text-zinc-400 font-medium">
+            <button
+              onClick={() => setIsCommandPaletteOpen(true)}
+              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition flex items-center gap-1"
+            >
+              <Command className="h-3 w-3" />
+              <span>Command Bar (Ctrl+K)</span>
+            </button>
+            <span>•</span>
             <button
               onClick={() => setIsDataModalOpen(true)}
-              className="hover:text-emerald-400 transition"
+              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition"
             >
               Export / Import Data
             </button>
             <span>•</span>
             <button
               onClick={() => setIsFlashcardsOpen(true)}
-              className="hover:text-emerald-400 transition"
+              className="hover:text-emerald-600 dark:hover:text-emerald-400 transition"
             >
-              Flashcard Mode
-            </button>
-            <span>•</span>
-            <button
-              onClick={() => handleOpenAddModal()}
-              className="hover:text-emerald-400 transition"
-            >
-              New Problem (N)
+              3D Flashcards (F)
             </button>
           </div>
         </div>
       </footer>
 
       {/* Modals */}
+      <CommandPaletteModal
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        problems={problems}
+        isDark={isDark}
+        viewMode={viewMode}
+        isTimerRunning={isTimerRunning}
+        onOpenAddModal={() => handleOpenAddModal()}
+        onOpenFlashcards={() => setIsFlashcardsOpen(true)}
+        onToggleTheme={() => {
+          toggleTheme();
+          pushToast(
+            isDark ? 'Light Mode Enabled' : 'Dark Mode Enabled',
+            'Theme preference saved locally.',
+            'info'
+          );
+        }}
+        onChangeViewMode={setViewMode}
+        onToggleTimer={toggleTimer}
+        onExportJson={() => {
+          exportDatabaseToJson(problems);
+          pushToast('JSON Backup Exported', `${problems.length} problems saved to disk.`);
+        }}
+        onExportCsv={() => {
+          exportProblemsToCsv(problems);
+          pushToast('CSV Spreadsheet Exported', `${problems.length} problems exported.`);
+        }}
+        onOpenDataModal={() => setIsDataModalOpen(true)}
+        onFilterDueToday={handleFilterDueToday}
+        onResetFilters={handleResetFilters}
+        onSelectProblem={handleOpenDetailModal}
+        onQuickReviewProblem={handleOpenQuickRevision}
+      />
+
       {isAddEditModalOpen && (
         <ProblemFormModal
           isOpen={isAddEditModalOpen}
@@ -440,7 +569,10 @@ export default function App() {
           }}
           onOpenQuickRevision={handleOpenQuickRevision}
           onOpenEditModal={handleOpenEditModal}
-          onDeleteProblem={deleteProblem}
+          onDeleteProblem={handleDeleteProblem}
+          onCopyCodeNotify={(title) =>
+            pushToast('Code Copied to Clipboard', `Copied solution for "${title}".`, 'info')
+          }
         />
       )}
 
@@ -476,11 +608,24 @@ export default function App() {
           syncErrorMessage={syncErrorMessage}
           onConnectNewFile={connectNewLocalFile}
           onOpenExistingFile={openExistingLocalFile}
-          onSaveToDisk={saveCurrentToLocalFile}
-          onDisconnectFile={disconnectFile}
+          onSaveToDisk={() => {
+            saveCurrentToLocalFile();
+            pushToast('Saved to Local File', `Synced with ${syncedFileName || 'disk'}.`);
+          }}
+          onDisconnectFile={() => {
+            disconnectFile();
+            pushToast('Local File Disconnected', 'Using browser localStorage.', 'info');
+          }}
           onImportProblems={importProblems}
-          onResetToSamples={resetToSamples}
-          onClearAll={clearAllProblems}
+          onResetToSamples={() => {
+            resetToSamples();
+            pushToast('Sample Data Restored', 'Loaded 5 curated DSA problems.');
+          }}
+          onClearAll={() => {
+            clearAllProblems();
+            pushToast('Vault Cleared', 'All tracked problems have been removed.', 'warning');
+          }}
+          onNotify={(title, desc) => pushToast(title, desc)}
         />
       )}
     </div>

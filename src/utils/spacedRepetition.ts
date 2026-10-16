@@ -77,7 +77,7 @@ export function getRelativeRevisionString(dateStr: string): { text: string; colo
     const days = Math.abs(diff);
     return {
       text: `${days} day${days > 1 ? 's' : ''} overdue`,
-      color: 'text-rose-400 bg-rose-500/15 border-rose-500/30',
+      color: 'text-rose-600 dark:text-rose-400 bg-rose-500/15 border-rose-500/30',
       isUrgent: true,
     };
   }
@@ -85,7 +85,7 @@ export function getRelativeRevisionString(dateStr: string): { text: string; colo
   if (diff === 0) {
     return {
       text: 'Due Today',
-      color: 'text-amber-400 bg-amber-500/15 border-amber-500/30',
+      color: 'text-amber-700 dark:text-amber-400 bg-amber-500/15 border-amber-500/30',
       isUrgent: true,
     };
   }
@@ -93,14 +93,14 @@ export function getRelativeRevisionString(dateStr: string): { text: string; colo
   if (diff === 1) {
     return {
       text: 'Due Tomorrow',
-      color: 'text-blue-400 bg-blue-500/10 border-blue-500/20',
+      color: 'text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 border-indigo-500/25',
       isUrgent: false,
     };
   }
 
   return {
     text: `In ${diff} days`,
-    color: 'text-zinc-400 bg-zinc-800/40 border-zinc-700/30',
+    color: 'text-slate-600 dark:text-zinc-400 bg-slate-200/70 dark:bg-zinc-800/50 border-slate-300 dark:border-zinc-700/40',
     isUrgent: false,
   };
 }

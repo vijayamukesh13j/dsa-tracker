@@ -13,9 +13,9 @@ import {
   Link,
   Unlink,
 } from 'lucide-react';
-import { Problem } from '../types/problem';
+import type { Problem } from '../types/problem';
 import { exportDatabaseToJson, exportProblemsToCsv, parseJsonBackupFile } from '../utils/exportImport';
-import { FileSyncStatus } from '../hooks/useProblems';
+import type { FileSyncStatus } from '../hooks/useProblems';
 
 interface DataSyncModalProps {
   isOpen: boolean;
@@ -32,6 +32,7 @@ interface DataSyncModalProps {
   onImportProblems: (imported: Problem[], mode: 'replace' | 'merge') => void;
   onResetToSamples: () => void;
   onClearAll: () => void;
+  onNotify?: (title: string, description?: string) => void;
 }
 
 export const DataSyncModal: React.FC<DataSyncModalProps> = ({
@@ -49,6 +50,7 @@ export const DataSyncModal: React.FC<DataSyncModalProps> = ({
   onImportProblems,
   onResetToSamples,
   onClearAll,
+  onNotify,
 }) => {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [importMode, setImportMode] = useState<'merge' | 'replace'>('merge');
@@ -60,10 +62,12 @@ export const DataSyncModal: React.FC<DataSyncModalProps> = ({
 
   const handleExportJson = () => {
     exportDatabaseToJson(problems);
+    if (onNotify) onNotify('JSON Backup Exported', `${problems.length} problems saved to file.`);
   };
 
   const handleExportCsv = () => {
     exportProblemsToCsv(problems);
+    if (onNotify) onNotify('CSV Spreadsheet Exported', `${problems.length} rows exported for Excel/Sheets.`);
   };
 
   const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -73,12 +77,14 @@ export const DataSyncModal: React.FC<DataSyncModalProps> = ({
     const res = await parseJsonBackupFile(file);
     if (res.success && res.problems) {
       onImportProblems(res.problems, importMode);
+      const msg = `Imported ${res.problems.length} problems (${
+        importMode === 'replace' ? 'replaced database' : 'merged with existing'
+      })!`;
       setImportMessage({
         type: 'success',
-        text: `Successfully imported ${res.problems.length} problems (${
-          importMode === 'replace' ? 'replaced existing database' : 'merged with existing'
-        })!`,
+        text: msg,
       });
+      if (onNotify) onNotify('Backup Restored', msg);
     } else {
       setImportMessage({
         type: 'error',
@@ -92,24 +98,24 @@ export const DataSyncModal: React.FC<DataSyncModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="w-full max-w-2xl rounded-2xl bg-zinc-900 border border-zinc-800 shadow-2xl flex flex-col max-h-[92vh] overflow-hidden text-zinc-100 relative">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 dark:bg-black/80 backdrop-blur-xs animate-in fade-in duration-150">
+      <div className="w-full max-w-2xl rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-2xl flex flex-col max-h-[92vh] overflow-hidden text-slate-900 dark:text-zinc-100 relative animate-float-up">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-zinc-800/80 flex items-center justify-between bg-zinc-950/50">
-          <div className="flex items-center gap-2">
-            <HardDrive className="h-5 w-5 text-emerald-400" />
+        <div className="px-6 py-4 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between bg-slate-50/80 dark:bg-zinc-950/50">
+          <div className="flex items-center gap-2.5">
+            <HardDrive className="h-5 w-5 text-emerald-500" />
             <div>
-              <h3 className="font-bold text-base tracking-tight text-zinc-100">
+              <h3 className="font-bold text-base tracking-tight text-slate-900 dark:text-zinc-100">
                 Data Management & Hard Drive Sync
               </h3>
-              <p className="text-xs text-zinc-400">
+              <p className="text-xs text-slate-500 dark:text-zinc-400">
                 100% Local • Zero-Backend • Automatic localStorage + File System Sync
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="text-zinc-400 hover:text-white p-1 rounded-lg hover:bg-zinc-800 transition"
+            className="text-slate-400 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-white p-1 rounded-lg hover:bg-slate-200/60 dark:hover:bg-zinc-800 transition"
           >
             <X className="h-5 w-5" />
           </button>
@@ -118,73 +124,72 @@ export const DataSyncModal: React.FC<DataSyncModalProps> = ({
         {/* Modal Body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
           {/* Section 1: File System Access API - Sync directly to Local Hard Drive */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-zinc-950/70 border border-zinc-800/90 space-y-4">
+          <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-zinc-950/70 border border-slate-200 dark:border-zinc-800/90 space-y-4">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h4 className="text-sm font-bold text-zinc-100 flex items-center gap-2">
-                  <HardDrive className="h-4 w-4 text-emerald-400" />
+                <h4 className="text-sm font-bold text-slate-900 dark:text-zinc-100 flex items-center gap-2">
+                  <HardDrive className="h-4 w-4 text-emerald-500" />
                   <span>Sync to Local File (Browser File System Access API)</span>
                 </h4>
-                <p className="text-xs text-zinc-400 mt-1 leading-relaxed">
+                <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1 leading-relaxed">
                   Link a `.json` file directly on your computer's hard drive. All edits and logged
-                  revisions will write directly to disk without requiring any backend server!
+                  revisions write directly to disk without any backend server!
                 </p>
               </div>
 
               {isFileSystemSupported && (
-                <span className="shrink-0 px-2 py-0.5 rounded text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  API Supported
+                <span className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                  API Ready
                 </span>
               )}
             </div>
 
             {/* Connection Status Box */}
-            <div className="p-3.5 rounded-xl bg-zinc-900 border border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="p-3.5 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
               <div className="flex items-center gap-2.5">
                 <div
                   className={`h-3 w-3 rounded-full ${
                     fileSyncStatus === 'synced' || fileSyncStatus === 'connected'
                       ? 'bg-emerald-500 ring-4 ring-emerald-500/20'
                       : fileSyncStatus === 'saving'
-                      ? 'bg-blue-500 animate-ping'
-                      : 'bg-zinc-600'
+                      ? 'bg-indigo-500 animate-ping'
+                      : 'bg-slate-400 dark:bg-zinc-600'
                   }`}
                 />
                 <div>
-                  <div className="text-xs font-semibold text-zinc-200">
+                  <div className="text-xs font-bold text-slate-800 dark:text-zinc-200">
                     {syncedFileName ? (
-                      <span className="font-mono text-emerald-400">
+                      <span className="font-mono text-emerald-600 dark:text-emerald-400">
                         Connected: {syncedFileName}
                       </span>
                     ) : (
                       'No local file connected'
                     )}
                   </div>
-                  <div className="text-[11px] text-zinc-400">
+                  <div className="text-[11px] text-slate-500 dark:text-zinc-400">
                     {fileSyncStatus === 'synced'
                       ? 'In sync with local file on disk'
                       : fileSyncStatus === 'saving'
                       ? 'Writing to local file...'
                       : fileSyncStatus === 'error'
                       ? syncErrorMessage || 'Sync error'
-                      : 'Data is currently safely persisted in browser LocalStorage.'}
+                      : 'Data is safely persisted in browser LocalStorage.'}
                   </div>
                 </div>
               </div>
 
-              {/* Actions */}
               <div className="flex items-center gap-2">
                 {syncedFileName ? (
                   <>
                     <button
                       onClick={onSaveToDisk}
-                      className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-bold transition shadow-xs"
+                      className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-bold transition shadow-2xs"
                     >
                       Save Now
                     </button>
                     <button
                       onClick={onDisconnectFile}
-                      className="p-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-rose-400 transition"
+                      className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-500 dark:text-zinc-400 hover:text-rose-500 transition"
                       title="Disconnect Local File"
                     >
                       <Unlink className="h-4 w-4" />
@@ -194,14 +199,14 @@ export const DataSyncModal: React.FC<DataSyncModalProps> = ({
                   <div className="flex items-center gap-2">
                     <button
                       onClick={onConnectNewFile}
-                      className="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-bold transition shadow-xs flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-bold transition shadow-2xs flex items-center gap-1.5"
                     >
                       <Link className="h-3.5 w-3.5" />
-                      <span>Create / Select Local File</span>
+                      <span>Create / Select File</span>
                     </button>
                     <button
                       onClick={onOpenExistingFile}
-                      className="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold transition"
+                      className="px-3 py-1.5 rounded-xl bg-slate-200/80 hover:bg-slate-300/70 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-800 dark:text-zinc-200 text-xs font-semibold transition"
                     >
                       Open Existing
                     </button>
@@ -211,58 +216,55 @@ export const DataSyncModal: React.FC<DataSyncModalProps> = ({
             </div>
 
             {!isFileSystemSupported && (
-              <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-200 flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0" />
+              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-xs text-amber-800 dark:text-amber-200 flex items-center gap-2">
+                <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />
                 <span>
-                  The modern File System Access API is not enabled in this browser (common in Firefox
-                  or non-HTTPS contexts). Use the standard JSON Export / Import buttons below to save
-                  and load your data anytime!
+                  File System Access API is not enabled in this browser. Use the standard JSON Export / Import buttons below to save and load your data anytime!
                 </span>
               </div>
             )}
           </div>
 
           {/* Section 2: One-click Export JSON & CSV */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-zinc-950/70 border border-zinc-800/90 space-y-3">
-            <h4 className="text-sm font-bold text-zinc-100 flex items-center gap-2">
-              <Download className="h-4 w-4 text-blue-400" />
+          <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-zinc-950/70 border border-slate-200 dark:border-zinc-800/90 space-y-3">
+            <h4 className="text-sm font-bold text-slate-900 dark:text-zinc-100 flex items-center gap-2">
+              <Download className="h-4 w-4 text-indigo-500" />
               <span>One-Click Export Backups</span>
             </h4>
-            <p className="text-xs text-zinc-400">
-              Download your complete database to save to cloud storage or spreadsheet tools.
+            <p className="text-xs text-slate-500 dark:text-zinc-400">
+              Download your complete database to transfer across devices or import into spreadsheets.
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
               <button
                 onClick={handleExportJson}
-                className="flex items-center justify-center gap-2 p-3 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800/60 text-xs font-semibold text-zinc-200 transition group"
+                className="flex items-center justify-center gap-2 p-3 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 hover:border-emerald-500/50 hover:bg-slate-100/60 dark:hover:bg-zinc-800/60 text-xs font-bold text-slate-800 dark:text-zinc-200 transition group shadow-2xs"
               >
-                <FileJson className="h-4 w-4 text-emerald-400 group-hover:scale-110 transition" />
+                <FileJson className="h-4 w-4 text-emerald-500 group-hover:scale-110 transition" />
                 <span>Export Full Backup (.json)</span>
               </button>
 
               <button
                 onClick={handleExportCsv}
-                className="flex items-center justify-center gap-2 p-3 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800/60 text-xs font-semibold text-zinc-200 transition group"
+                className="flex items-center justify-center gap-2 p-3 rounded-xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 hover:border-emerald-500/50 hover:bg-slate-100/60 dark:hover:bg-zinc-800/60 text-xs font-bold text-slate-800 dark:text-zinc-200 transition group shadow-2xs"
               >
-                <FileSpreadsheet className="h-4 w-4 text-emerald-400 group-hover:scale-110 transition" />
+                <FileSpreadsheet className="h-4 w-4 text-emerald-500 group-hover:scale-110 transition" />
                 <span>Export to Spreadsheet (.csv)</span>
               </button>
             </div>
           </div>
 
           {/* Section 3: Import Backup (.json) */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-zinc-950/70 border border-zinc-800/90 space-y-3">
-            <h4 className="text-sm font-bold text-zinc-100 flex items-center gap-2">
-              <Upload className="h-4 w-4 text-emerald-400" />
+          <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-zinc-950/70 border border-slate-200 dark:border-zinc-800/90 space-y-3">
+            <h4 className="text-sm font-bold text-slate-900 dark:text-zinc-100 flex items-center gap-2">
+              <Upload className="h-4 w-4 text-emerald-500" />
               <span>Restore from Backup (.json)</span>
             </h4>
-            <p className="text-xs text-zinc-400">
+            <p className="text-xs text-slate-500 dark:text-zinc-400">
               Restore your tracked DSA problems from a previously exported `.json` file.
             </p>
 
-            {/* Import Mode Selector */}
-            <div className="flex items-center gap-4 text-xs text-zinc-300">
+            <div className="flex items-center gap-4 text-xs text-slate-700 dark:text-zinc-300 font-medium">
               <label className="flex items-center gap-1.5 cursor-pointer">
                 <input
                   type="radio"
@@ -285,7 +287,6 @@ export const DataSyncModal: React.FC<DataSyncModalProps> = ({
               </label>
             </div>
 
-            {/* Hidden File Input & Trigger */}
             <input
               type="file"
               ref={fileInputRef}
@@ -296,18 +297,18 @@ export const DataSyncModal: React.FC<DataSyncModalProps> = ({
 
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="w-full py-3 rounded-xl border border-dashed border-zinc-700 hover:border-emerald-500 bg-zinc-900/60 hover:bg-zinc-800/60 text-xs font-semibold text-zinc-200 flex items-center justify-center gap-2 transition"
+              className="w-full py-3 rounded-xl border border-dashed border-slate-300 dark:border-zinc-700 hover:border-emerald-500 bg-white dark:bg-zinc-900/60 hover:bg-slate-100/50 dark:hover:bg-zinc-800/60 text-xs font-bold text-slate-700 dark:text-zinc-200 flex items-center justify-center gap-2 transition"
             >
-              <Upload className="h-4 w-4 text-emerald-400" />
+              <Upload className="h-4 w-4 text-emerald-500" />
               <span>Click to select `.json` backup file</span>
             </button>
 
             {importMessage && (
               <div
-                className={`p-3 rounded-lg text-xs flex items-center gap-2 ${
+                className={`p-3 rounded-xl text-xs flex items-center gap-2 ${
                   importMessage.type === 'success'
-                    ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-300'
-                    : 'bg-rose-500/15 border border-rose-500/30 text-rose-300'
+                    ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300'
+                    : 'bg-rose-500/15 border border-rose-500/30 text-rose-700 dark:text-rose-300'
                 }`}
               >
                 {importMessage.type === 'success' ? (
@@ -321,11 +322,11 @@ export const DataSyncModal: React.FC<DataSyncModalProps> = ({
           </div>
 
           {/* Section 4: Sample Data & Reset */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-zinc-950/70 border border-zinc-800/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-zinc-950/70 border border-slate-200 dark:border-zinc-800/90 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h4 className="text-sm font-bold text-zinc-100">Database Tools</h4>
-              <p className="text-xs text-zinc-400 mt-0.5">
-                Load the 5 canonical sample problems or wipe your local database clean.
+              <h4 className="text-sm font-bold text-slate-900 dark:text-zinc-100">Database Tools</h4>
+              <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+                Load the 5 canonical sample problems or clear your local vault.
               </p>
             </div>
 
@@ -341,10 +342,10 @@ export const DataSyncModal: React.FC<DataSyncModalProps> = ({
                     onClose();
                   }
                 }}
-                className="px-3 py-1.5 rounded-lg bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-zinc-200 flex items-center gap-1.5 transition"
+                className="px-3 py-1.5 rounded-xl bg-slate-200/80 hover:bg-slate-300/70 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-xs font-bold text-slate-700 dark:text-zinc-200 flex items-center gap-1.5 transition"
               >
-                <RotateCcw className="h-3.5 w-3.5 text-amber-400" />
-                <span>Reset to Sample Data</span>
+                <RotateCcw className="h-3.5 w-3.5 text-amber-500" />
+                <span>Reset to Samples</span>
               </button>
 
               <button
@@ -358,7 +359,7 @@ export const DataSyncModal: React.FC<DataSyncModalProps> = ({
                     onClose();
                   }
                 }}
-                className="px-3 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-400 text-xs font-semibold flex items-center gap-1.5 transition"
+                className="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs font-bold flex items-center gap-1.5 transition"
               >
                 <Trash2 className="h-3.5 w-3.5" />
                 <span>Clear All Data</span>
@@ -368,13 +369,13 @@ export const DataSyncModal: React.FC<DataSyncModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-zinc-800 bg-zinc-950/50 flex items-center justify-between">
-          <div className="text-xs text-zinc-500">
-            Current records: <strong className="text-zinc-300">{problems.length} problems</strong>
+        <div className="px-6 py-4 border-t border-slate-200 dark:border-zinc-800 bg-slate-50/80 dark:bg-zinc-950/50 flex items-center justify-between">
+          <div className="text-xs text-slate-500 dark:text-zinc-500 font-mono">
+            Current records: <strong className="text-slate-800 dark:text-zinc-300">{problems.length} problems</strong>
           </div>
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-xs font-semibold text-zinc-200 transition"
+            className="px-4 py-2 rounded-xl bg-slate-200/80 hover:bg-slate-300/70 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-xs font-bold text-slate-800 dark:text-zinc-200 transition"
           >
             Close
           </button>
