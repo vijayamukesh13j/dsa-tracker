@@ -172,13 +172,13 @@ export const ProblemFormModal: React.FC<ProblemFormModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 dark:bg-black/80 backdrop-blur-xs animate-in fade-in duration-150">
-      <div className="w-full max-w-3xl rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-2xl flex flex-col max-h-[92vh] overflow-hidden text-slate-900 dark:text-zinc-100 relative animate-float-up">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 dark:bg-black/80 backdrop-blur-xs animate-in fade-in duration-150">
+      <div className="w-full max-w-3xl rounded-t-2xl sm:rounded-2xl bg-white dark:bg-zinc-900 border-t sm:border border-slate-200 dark:border-zinc-800 shadow-2xl flex flex-col max-h-[92dvh] overflow-hidden text-slate-900 dark:text-zinc-100 relative animate-float-up">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between bg-slate-50/80 dark:bg-zinc-950/50">
+        <div className="px-4 sm:px-6 py-3.5 sm:py-4 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between bg-slate-50/80 dark:bg-zinc-950/50">
           <div className="flex items-center gap-2">
             <Sparkles className="h-4 w-4 text-emerald-500" />
-            <h3 className="font-bold text-base tracking-tight text-slate-900 dark:text-zinc-100">
+            <h3 className="font-bold text-sm sm:text-base tracking-tight text-slate-900 dark:text-zinc-100">
               {editingProblem ? 'Edit DSA Problem' : 'Track New DSA Problem'}
             </h3>
           </div>
@@ -191,7 +191,7 @@ export const ProblemFormModal: React.FC<ProblemFormModalProps> = ({
         </div>
 
         {/* Scrollable Form Body */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 sm:space-y-6">
           {/* URL & Platform Auto-detection */}
           <div>
             <div className="flex items-center justify-between mb-1.5">

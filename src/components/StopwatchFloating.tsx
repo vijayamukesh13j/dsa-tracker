@@ -24,16 +24,18 @@ export const StopwatchFloating: React.FC<StopwatchFloatingProps> = ({
   onReset,
   onLogWithTimer,
 }) => {
-  const [isMinimized, setIsMinimized] = useState<boolean>(false);
+  const [isMinimized, setIsMinimized] = useState<boolean>(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 640 : false
+  );
 
   return (
     <aside
       aria-label="Mock Interview Timer"
-      className="fixed bottom-5 right-5 z-40 animate-in fade-in slide-in-from-bottom-4 duration-300"
+      className="fixed bottom-20 right-3 sm:bottom-5 sm:right-5 z-40 animate-in fade-in slide-in-from-bottom-4 duration-300"
     >
       <div className="rounded-2xl bg-white/95 dark:bg-zinc-900/95 border border-slate-200 dark:border-zinc-800 shadow-2xl shadow-slate-900/10 dark:shadow-black/50 backdrop-blur-md overflow-hidden text-slate-900 dark:text-zinc-100 transition-all">
         {/* Top Mini Bar */}
-        <div className="px-3.5 py-2 bg-slate-50/90 dark:bg-zinc-950/60 border-b border-slate-200/80 dark:border-zinc-800/80 flex items-center justify-between gap-3 text-xs">
+        <div className="px-3 py-1.5 sm:px-3.5 sm:py-2 bg-slate-50/90 dark:bg-zinc-950/60 border-b border-slate-200/80 dark:border-zinc-800/80 flex items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-1.5 font-bold text-slate-700 dark:text-zinc-300">
             <Clock
               className={`h-3.5 w-3.5 ${
@@ -58,8 +60,8 @@ export const StopwatchFloating: React.FC<StopwatchFloatingProps> = ({
 
         {/* Expanded View */}
         {!isMinimized ? (
-          <div className="p-3.5 space-y-3">
-            <div className="text-center font-mono font-black text-2xl tracking-wider text-slate-900 dark:text-zinc-100 py-0.5">
+          <div className="p-3 sm:p-3.5 space-y-2.5 sm:space-y-3">
+            <div className="text-center font-mono font-black text-xl sm:text-2xl tracking-wider text-slate-900 dark:text-zinc-100 py-0.5">
               {formattedTime}
             </div>
 
@@ -107,11 +109,11 @@ export const StopwatchFloating: React.FC<StopwatchFloatingProps> = ({
           /* Minimized pill */
           <div
             onClick={() => setIsMinimized(false)}
-            className="px-3.5 py-1.5 font-mono text-xs font-bold text-emerald-600 dark:text-emerald-400 cursor-pointer hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition flex items-center gap-2"
+            className="px-3 py-1.5 font-mono text-xs font-bold text-emerald-600 dark:text-emerald-400 cursor-pointer hover:bg-slate-100 dark:hover:bg-zinc-800/60 transition flex items-center gap-2"
           >
             <span>{formattedTime}</span>
             <span className="text-[10px] text-slate-400 dark:text-zinc-500 uppercase font-sans font-normal">
-              {isRunning ? 'Running' : 'Paused'}
+              {isRunning ? 'Run' : 'Tap'}
             </span>
           </div>
         )}

@@ -56,7 +56,7 @@ export const ToastContainer: React.FC<ToastContainerProps> = ({
   return (
     <div
       aria-live="polite"
-      className="fixed bottom-5 left-5 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none"
+      className="fixed bottom-20 left-3 right-3 sm:bottom-5 sm:left-5 sm:right-auto z-50 flex flex-col gap-2.5 sm:max-w-sm sm:w-full pointer-events-none"
     >
       {toasts.map((toast) => (
         <div

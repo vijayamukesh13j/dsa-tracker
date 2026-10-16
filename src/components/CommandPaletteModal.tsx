@@ -312,7 +312,7 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center pt-[12vh] p-4 bg-slate-900/50 dark:bg-black/75 backdrop-blur-sm animate-in fade-in duration-150"
+      className="fixed inset-0 z-50 flex items-start justify-center pt-4 sm:pt-[12vh] p-3 sm:p-4 bg-slate-900/50 dark:bg-black/75 backdrop-blur-sm animate-in fade-in duration-150"
       onClick={onClose}
     >
       <div
@@ -327,16 +327,19 @@ export const CommandPaletteModal: React.FC<CommandPaletteModalProps> = ({
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Type a command or search DSA problems, patterns, actions..."
+            placeholder="Search DSA problems, patterns, or commands..."
             className="w-full bg-transparent text-sm text-slate-900 dark:text-zinc-100 placeholder-slate-400 dark:placeholder-zinc-500 focus:outline-none"
           />
-          <kbd className="px-1.5 py-0.5 text-[10px] font-mono rounded bg-slate-200/80 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 border border-slate-300/60 dark:border-zinc-700">
+          <button
+            onClick={onClose}
+            className="px-1.5 py-0.5 text-[10px] font-mono rounded bg-slate-200/80 dark:bg-zinc-800 text-slate-500 dark:text-zinc-400 border border-slate-300/60 dark:border-zinc-700 shrink-0"
+          >
             ESC
-          </kbd>
+          </button>
         </div>
 
         {/* Results List */}
-        <div className="max-h-[60vh] overflow-y-auto p-2 space-y-3">
+        <div className="max-h-[65dvh] sm:max-h-[60vh] overflow-y-auto p-2 space-y-3">
           {items.length === 0 ? (
             <div className="py-10 text-center text-xs text-slate-400 dark:text-zinc-500">
               No matching commands or problems found for "{query}".

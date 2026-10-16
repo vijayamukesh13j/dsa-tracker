@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Calendar, Flame } from 'lucide-react';
 import type { Problem } from '../types/problem';
 import { generate90DayHeatmap, type HeatmapDay } from '../utils/spacedRepetition';
@@ -9,8 +9,15 @@ interface Heatmap90DaysProps {
 
 export const Heatmap90Days: React.FC<Heatmap90DaysProps> = ({ problems }) => {
   const [hoveredDay, setHoveredDay] = useState<HeatmapDay | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   const days = generate90DayHeatmap(problems);
+
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollLeft = scrollContainerRef.current.scrollWidth;
+    }
+  }, [problems.length]);
 
   const weeks: HeatmapDay[][] = [];
   let currentWeek: HeatmapDay[] = [];
@@ -53,26 +60,26 @@ export const Heatmap90Days: React.FC<Heatmap90DaysProps> = ({ problems }) => {
   };
 
   return (
-    <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-zinc-900/75 border border-slate-200/90 dark:border-zinc-800/80 shadow-xs transition-all">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+    <div className="p-3.5 sm:p-5 rounded-2xl bg-white dark:bg-zinc-900/75 border border-slate-200/90 dark:border-zinc-800/80 shadow-xs transition-all">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 mb-3.5 sm:mb-4">
         <div>
           <div className="flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-emerald-500" />
-            <h3 className="font-bold text-sm text-slate-900 dark:text-zinc-100 tracking-tight">
+            <Calendar className="h-4 w-4 text-emerald-500 shrink-0" />
+            <h3 className="font-bold text-xs sm:text-sm text-slate-900 dark:text-zinc-100 tracking-tight">
               90-Day Practice & Revision Consistency
             </h3>
           </div>
-          <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
+          <p className="text-[11px] sm:text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
             <strong className="font-mono text-slate-800 dark:text-zinc-200">{totalSolved}</strong> solved •{' '}
             <strong className="font-mono text-slate-800 dark:text-zinc-200">{totalRevised}</strong> revised across{' '}
-            <strong className="font-mono text-slate-800 dark:text-zinc-200">{activeDaysCount}</strong> active days in the last 90 days
+            <strong className="font-mono text-slate-800 dark:text-zinc-200">{activeDaysCount}</strong> active days
           </p>
         </div>
 
-        {/* Hover info badge */}
-        <div className="h-7 flex items-center">
+        {/* Hover / Tap info badge */}
+        <div className="min-h-7 flex items-center">
           {hoveredDay ? (
-            <div className="flex items-center gap-2 text-xs bg-slate-100 dark:bg-zinc-800 px-3 py-1 rounded-lg border border-slate-200 dark:border-zinc-700 text-slate-800 dark:text-zinc-200 shadow-2xs">
+            <div className="flex items-center gap-2 text-[11px] sm:text-xs bg-slate-100 dark:bg-zinc-800 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-zinc-700 text-slate-800 dark:text-zinc-200 shadow-2xs">
               <span className="font-bold text-emerald-600 dark:text-emerald-400">
                 {formatDateLabel(hoveredDay.date)}:
               </span>
@@ -83,38 +90,42 @@ export const Heatmap90Days: React.FC<Heatmap90DaysProps> = ({ problems }) => {
               </span>
             </div>
           ) : (
-            <div className="text-xs text-slate-400 dark:text-zinc-500 flex items-center gap-1">
-              <Flame className="h-3.5 w-3.5" />
-              <span>Hover over any day for breakdown</span>
+            <div className="text-[11px] sm:text-xs text-slate-400 dark:text-zinc-500 flex items-center gap-1">
+              <Flame className="h-3.5 w-3.5 shrink-0" />
+              <span>Tap or hover any day for breakdown</span>
             </div>
           )}
         </div>
       </div>
 
-      {/* Grid container with horizontal scroll on small devices */}
-      <div className="overflow-x-auto pb-2">
+      {/* Grid container with horizontal scroll on small devices (auto-scrolled to latest week) */}
+      <div ref={scrollContainerRef} className="overflow-x-auto pb-2 no-scrollbar">
         <div className="flex gap-1.5 min-w-max">
           {weeks.map((week, wIdx) => (
             <div key={wIdx} className="flex flex-col gap-1.5">
-              {week.map((day) => (
-                <div
-                  key={day.date}
-                  onMouseEnter={() => setHoveredDay(day)}
-                  onMouseLeave={() => setHoveredDay(null)}
-                  className={`h-3.5 w-3.5 sm:h-4 sm:w-4 rounded-[4px] border transition-all cursor-pointer ${getCellColor(
-                    day.level
-                  )}`}
-                  title={`${day.date}: ${day.solved} solved, ${day.revised} revised`}
-                />
-              ))}
+              {week.map((day) => {
+                const isSelected = hoveredDay?.date === day.date;
+                return (
+                  <div
+                    key={day.date}
+                    onMouseEnter={() => setHoveredDay(day)}
+                    onMouseLeave={() => setHoveredDay(null)}
+                    onClick={() => setHoveredDay(day)}
+                    className={`h-3.5 w-3.5 sm:h-4 sm:w-4 rounded-[4px] border transition-all cursor-pointer ${getCellColor(
+                      day.level
+                    )} ${isSelected ? 'ring-2 ring-emerald-500 scale-110' : ''}`}
+                    title={`${day.date}: ${day.solved} solved, ${day.revised} revised`}
+                  />
+                );
+              })}
             </div>
           ))}
         </div>
       </div>
 
       {/* Heatmap Legend */}
-      <div className="mt-3 pt-3 border-t border-slate-100 dark:border-zinc-800/60 flex items-center justify-between text-[11px] text-slate-500 dark:text-zinc-400">
-        <span>Tracks your real daily solves & logged revisions</span>
+      <div className="mt-2.5 pt-2.5 border-t border-slate-100 dark:border-zinc-800/60 flex flex-wrap items-center justify-between gap-2 text-[10px] sm:text-[11px] text-slate-500 dark:text-zinc-400">
+        <span>Real daily solves & logged revisions</span>
         <div className="flex items-center gap-1.5">
           <span>Less</span>
           <div className="flex items-center gap-1">

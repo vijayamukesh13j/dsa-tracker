@@ -125,10 +125,10 @@ export const FlashcardReviewModal: React.FC<FlashcardReviewModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="w-full max-w-2xl rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-2xl flex flex-col max-h-[92vh] overflow-hidden text-slate-900 dark:text-zinc-100 relative animate-float-up">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/60 dark:bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="w-full max-w-2xl rounded-t-2xl sm:rounded-2xl bg-white dark:bg-zinc-900 border-t sm:border border-slate-200 dark:border-zinc-800 shadow-2xl flex flex-col max-h-[92dvh] overflow-hidden text-slate-900 dark:text-zinc-100 relative animate-float-up">
         {/* Modal Top Header */}
-        <div className="px-5 py-3.5 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between bg-slate-50/80 dark:bg-zinc-950/60">
+        <div className="px-4 sm:px-5 py-3 sm:py-3.5 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between bg-slate-50/80 dark:bg-zinc-950/60">
           <div className="flex items-center gap-2">
             <div className="p-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400">
               <Layers className="h-4 w-4" />
@@ -138,15 +138,18 @@ export const FlashcardReviewModal: React.FC<FlashcardReviewModalProps> = ({
                 3D Spaced Repetition Deck
               </h3>
               <p className="text-[11px] text-slate-500 dark:text-zinc-400">
-                Press <kbd className="font-mono">Space</kbd> to flip card • <kbd className="font-mono">1-5</kbd> to rate recall
+                <span className="sm:hidden">Tap card to flip • Tap 1-5 to rate</span>
+                <span className="hidden sm:inline">
+                  Press <kbd className="font-mono">Space</kbd> to flip card • <kbd className="font-mono">1-5</kbd> to rate recall
+                </span>
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {!sessionCompleted && queue.length > 0 && (
               <span className="text-xs font-mono px-2.5 py-1 rounded-full bg-slate-200/80 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-semibold">
-                {reviewedIds.size} / {queue.length} done
+                {reviewedIds.size} / {queue.length}
               </span>
             )}
             <button

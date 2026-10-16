@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Sparkles, Command } from 'lucide-react';
+import { Sparkles, Command, Layers, Plus, Search, HardDrive, BookOpen } from 'lucide-react';
 import {
   type ConfidenceLevel,
   CONFIDENCE_CONFIG,
@@ -235,6 +235,11 @@ export default function App() {
       });
   }, [problems, filter]);
 
+  const dueCount = useMemo(() => {
+    const today = getTodayISO();
+    return problems.filter((p) => diffInDays(p.nextRevisionDate, today) <= 0).length;
+  }, [problems]);
+
   const flashcardQueue = useMemo(() => {
     const today = getTodayISO();
     const dueItems = problems.filter((p) => diffInDays(p.nextRevisionDate, today) <= 0);
@@ -362,7 +367,7 @@ export default function App() {
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-5 sm:space-y-6">
         {/* Top KPI Cards */}
         <DashboardStats
           problems={problems}
@@ -382,25 +387,28 @@ export default function App() {
         />
 
         {/* Problem Explorer Section Header */}
-        <div className="pt-2 space-y-4">
+        <div id="problem-vault" className="pt-1 sm:pt-2 space-y-3.5 sm:space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200 dark:border-zinc-800 pb-3.5">
             <div>
-              <h2 className="text-lg font-extrabold tracking-tight text-slate-900 dark:text-zinc-100 flex items-center gap-2">
+              <h2 className="text-base sm:text-lg font-extrabold tracking-tight text-slate-900 dark:text-zinc-100 flex items-center gap-2">
                 <span>Problem Mastery Vault</span>
                 <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-slate-200/80 dark:bg-zinc-900 border border-slate-300/60 dark:border-zinc-800 text-slate-700 dark:text-zinc-400">
                   {problems.length} total
                 </span>
               </h2>
               <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
-                Search, filter, inspect full code & notes, or press{' '}
-                <kbd className="px-1.5 py-0.2 rounded bg-slate-200/70 dark:bg-zinc-800 font-mono text-[10px]">
-                  Ctrl K
-                </kbd>{' '}
-                for instant commands
+                Search, filter, inspect full code & notes
+                <span className="hidden sm:inline">
+                  , or press{' '}
+                  <kbd className="px-1.5 py-0.2 rounded bg-slate-200/70 dark:bg-zinc-800 font-mono text-[10px]">
+                    Ctrl K
+                  </kbd>{' '}
+                  for instant commands
+                </span>
               </p>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-2">
               <button
                 onClick={() => setIsFlashcardsOpen(true)}
                 className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white hover:bg-slate-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 border border-slate-200 dark:border-zinc-800 text-slate-800 dark:text-zinc-200 text-xs font-bold transition shadow-2xs"
@@ -456,6 +464,59 @@ export default function App() {
         </div>
       </main>
 
+      {/* Mobile Fixed Bottom Navigation Bar (< 640px) */}
+      <nav
+        aria-label="Mobile Quick Navigation"
+        className="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-xl border-t border-slate-200/90 dark:border-zinc-800/90 px-2 py-1.5 flex items-center justify-around shadow-lg"
+      >
+        <button
+          onClick={() => {
+            document.getElementById('problem-vault')?.scrollIntoView({ behavior: 'smooth' });
+          }}
+          className="flex flex-col items-center justify-center gap-0.5 py-1 px-2.5 rounded-xl text-slate-600 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition"
+        >
+          <BookOpen className="h-4 w-4" />
+          <span className="text-[10px] font-bold">Vault</span>
+        </button>
+
+        <button
+          onClick={() => setIsFlashcardsOpen(true)}
+          className="relative flex flex-col items-center justify-center gap-0.5 py-1 px-2.5 rounded-xl text-slate-600 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition"
+        >
+          <Layers className="h-4 w-4 text-emerald-500" />
+          <span className="text-[10px] font-bold">3D Deck</span>
+          {dueCount > 0 && (
+            <span className="absolute top-0.5 right-1.5 h-4 min-w-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-mono font-bold flex items-center justify-center">
+              {dueCount}
+            </span>
+          )}
+        </button>
+
+        <button
+          onClick={() => handleOpenAddModal()}
+          className="flex items-center justify-center gap-1 px-3.5 py-2 rounded-2xl bg-emerald-500 active:bg-emerald-600 text-zinc-950 text-xs font-extrabold shadow-md shadow-emerald-500/25 transition"
+        >
+          <Plus className="h-4 w-4 stroke-[2.5]" />
+          <span>Add</span>
+        </button>
+
+        <button
+          onClick={() => setIsCommandPaletteOpen(true)}
+          className="flex flex-col items-center justify-center gap-0.5 py-1 px-2.5 rounded-xl text-slate-600 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition"
+        >
+          <Search className="h-4 w-4" />
+          <span className="text-[10px] font-bold">Search</span>
+        </button>
+
+        <button
+          onClick={() => setIsDataModalOpen(true)}
+          className="flex flex-col items-center justify-center gap-0.5 py-1 px-2.5 rounded-xl text-slate-600 dark:text-zinc-400 hover:text-emerald-600 dark:hover:text-emerald-400 transition"
+        >
+          <HardDrive className="h-4 w-4" />
+          <span className="text-[10px] font-bold">Sync</span>
+        </button>
+      </nav>
+
       {/* Floating Mock Timer Widget */}
       <StopwatchFloating
         formattedTime={formattedTime}
@@ -469,13 +530,13 @@ export default function App() {
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
       {/* Footer */}
-      <footer className="mt-auto border-t border-slate-200/80 dark:border-zinc-900 py-6 text-center text-xs text-slate-500 dark:text-zinc-500">
+      <footer className="mt-auto border-t border-slate-200/80 dark:border-zinc-900 pt-6 pb-20 sm:pb-6 text-center text-xs text-slate-500 dark:text-zinc-500">
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center justify-center gap-2">
             <span className="font-semibold text-slate-700 dark:text-zinc-300">
               DSA Mastery & Spaced Repetition Tracker
             </span>
-            <span>•</span>
+            <span className="hidden sm:inline">•</span>
             <span>100% Local-First Architecture</span>
           </div>
 
@@ -485,7 +546,7 @@ export default function App() {
               className="hover:text-emerald-600 dark:hover:text-emerald-400 transition flex items-center gap-1"
             >
               <Command className="h-3 w-3" />
-              <span>Command Bar (Ctrl+K)</span>
+              <span>Command Bar</span>
             </button>
             <span>•</span>
             <button
@@ -499,7 +560,7 @@ export default function App() {
               onClick={() => setIsFlashcardsOpen(true)}
               className="hover:text-emerald-600 dark:hover:text-emerald-400 transition"
             >
-              3D Flashcards (F)
+              3D Flashcards
             </button>
           </div>
         </div>
