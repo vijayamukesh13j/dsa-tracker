@@ -23,7 +23,8 @@ export const Heatmap90Days: React.FC<Heatmap90DaysProps> = ({ problems }) => {
     }
   });
 
-  const totalActivities = days.reduce((sum, d) => sum + d.count, 0);
+  const totalSolved = days.reduce((sum, d) => sum + d.solved, 0);
+  const totalRevised = days.reduce((sum, d) => sum + d.revised, 0);
   const activeDaysCount = days.filter((d) => d.count > 0).length;
 
   const getCellColor = (level: number) => {
@@ -62,7 +63,8 @@ export const Heatmap90Days: React.FC<Heatmap90DaysProps> = ({ problems }) => {
             </h3>
           </div>
           <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
-            <strong className="font-mono text-slate-800 dark:text-zinc-200">{totalActivities}</strong> total activities across{' '}
+            <strong className="font-mono text-slate-800 dark:text-zinc-200">{totalSolved}</strong> solved •{' '}
+            <strong className="font-mono text-slate-800 dark:text-zinc-200">{totalRevised}</strong> revised across{' '}
             <strong className="font-mono text-slate-800 dark:text-zinc-200">{activeDaysCount}</strong> active days in the last 90 days
           </p>
         </div>
@@ -76,14 +78,14 @@ export const Heatmap90Days: React.FC<Heatmap90DaysProps> = ({ problems }) => {
               </span>
               <span className="font-mono">
                 {hoveredDay.count === 0
-                  ? 'No practice'
-                  : `${hoveredDay.solved} solved, ${hoveredDay.revised} revised (${hoveredDay.count} total)`}
+                  ? '0 solved, 0 revised'
+                  : `${hoveredDay.solved} solved, ${hoveredDay.revised} revised`}
               </span>
             </div>
           ) : (
             <div className="text-xs text-slate-400 dark:text-zinc-500 flex items-center gap-1">
               <Flame className="h-3.5 w-3.5" />
-              <span>Hover over any day for details</span>
+              <span>Hover over any day for breakdown</span>
             </div>
           )}
         </div>
@@ -102,7 +104,7 @@ export const Heatmap90Days: React.FC<Heatmap90DaysProps> = ({ problems }) => {
                   className={`h-3.5 w-3.5 sm:h-4 sm:w-4 rounded-[4px] border transition-all cursor-pointer ${getCellColor(
                     day.level
                   )}`}
-                  title={`${day.date}: ${day.count} activities (${day.solved} solved, ${day.revised} revised)`}
+                  title={`${day.date}: ${day.solved} solved, ${day.revised} revised`}
                 />
               ))}
             </div>
@@ -112,7 +114,7 @@ export const Heatmap90Days: React.FC<Heatmap90DaysProps> = ({ problems }) => {
 
       {/* Heatmap Legend */}
       <div className="mt-3 pt-3 border-t border-slate-100 dark:border-zinc-800/60 flex items-center justify-between text-[11px] text-slate-500 dark:text-zinc-400">
-        <span>Daily solves + spaced revisions</span>
+        <span>Tracks your real daily solves & logged revisions</span>
         <div className="flex items-center gap-1.5">
           <span>Less</span>
           <div className="flex items-center gap-1">

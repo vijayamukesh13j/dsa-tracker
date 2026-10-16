@@ -356,15 +356,9 @@ export default function App() {
         }}
         onOpenAddModal={() => handleOpenAddModal()}
         onOpenDataModal={() => setIsDataModalOpen(true)}
-        onOpenFlashcards={() => setIsFlashcardsOpen(true)}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
-        onFilterDueToday={handleFilterDueToday}
         fileSyncStatus={fileSyncStatus}
         syncedFileName={syncedFileName}
-        timerFormatted={formattedTime}
-        isTimerRunning={isTimerRunning}
-        onToggleTimer={toggleTimer}
-        onResetTimer={resetTimer}
       />
 
       {/* Main Content Area */}

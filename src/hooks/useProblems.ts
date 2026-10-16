@@ -47,7 +47,7 @@ export function useProblems() {
     }
   }, []);
 
-  // Add problem
+  // Add problem (First solve - 0 revisions until actually reviewed later)
   const addProblem = useCallback(
     (
       newProblemData: Omit<
@@ -65,23 +65,13 @@ export function useProblems() {
         newProblemData.nextRevisionDate ||
         calculateNextRevisionDate(newProblemData.confidence, newProblemData.dateFirstSolved || today);
 
-      const initialHistory: RevisionRecord[] = [
-        {
-          id: 'rev_' + Date.now(),
-          date: newProblemData.dateFirstSolved || today,
-          confidence: newProblemData.confidence,
-          solveTimeMinutes: newProblemData.solveTimeMinutes,
-          notes: newProblemData.initialNotes || 'First solve logged',
-        },
-      ];
-
       const problem: Problem = {
         ...newProblemData,
         id,
-        revisionCount: newProblemData.revisionCount ?? 1,
-        lastRevisionDate: newProblemData.lastRevisionDate || newProblemData.dateFirstSolved || today,
+        revisionCount: 0,
+        lastRevisionDate: '',
         nextRevisionDate: nextRev,
-        revisionHistory: initialHistory,
+        revisionHistory: [],
         createdAt: today,
         updatedAt: today,
       };

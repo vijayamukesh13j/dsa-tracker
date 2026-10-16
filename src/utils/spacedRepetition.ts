@@ -106,14 +106,24 @@ export function getRelativeRevisionString(dateStr: string): { text: string; colo
 }
 
 /**
- * Calculate user daily streak based on solved dates & revision histories
+ * Helper to check if a problem is a built-in preloaded sample
+ */
+export function isSampleProblem(problem: Problem): boolean {
+  return problem.id.startsWith('sample-');
+}
+
+/**
+ * Calculate user daily streak based on real solved dates & revision histories
  */
 export function calculateStreak(problems: Problem[]): number {
   const activeDates = new Set<string>();
 
   problems.forEach((p) => {
-    if (p.dateFirstSolved) activeDates.add(p.dateFirstSolved);
-    if (p.lastRevisionDate) activeDates.add(p.lastRevisionDate);
+    // Only count dateFirstSolved if it's a user-added problem (not a preloaded sample placeholder)
+    if (!isSampleProblem(p) && p.dateFirstSolved) {
+      activeDates.add(p.dateFirstSolved);
+    }
+    // Count all actual revisions logged by the user
     p.revisionHistory?.forEach((r) => {
       const d = r.date.includes('T') ? r.date.split('T')[0] : r.date;
       activeDates.add(d);
@@ -123,12 +133,10 @@ export function calculateStreak(problems: Problem[]): number {
   const today = getTodayISO();
   const yesterday = addDaysToDate(today, -1);
 
-  // If active neither today nor yesterday, streak is 0
   if (!activeDates.has(today) && !activeDates.has(yesterday)) {
     return 0;
   }
 
-  // Count backwards
   let currentCheck = activeDates.has(today) ? today : yesterday;
   let streak = 0;
 
@@ -141,32 +149,26 @@ export function calculateStreak(problems: Problem[]): number {
 }
 
 /**
- * Calculate count of problems first solved today
+ * Calculate count of problems first solved today by the user
  */
 export function getProblemsSolvedToday(problems: Problem[]): number {
   const today = getTodayISO();
-  return problems.filter((p) => p.dateFirstSolved === today).length;
+  return problems.filter((p) => !isSampleProblem(p) && p.dateFirstSolved === today).length;
 }
 
 /**
- * Calculate count of revisions conducted today
+ * Calculate count of revisions conducted today by the user
  */
 export function getRevisionsDoneToday(problems: Problem[]): number {
   const today = getTodayISO();
   let count = 0;
   problems.forEach((p) => {
-    if (p.lastRevisionDate === today && p.dateFirstSolved !== today) {
-      count++;
-    } else {
-      // Also check revision history items recorded today
-      const hasRevToday = p.revisionHistory?.some(r => {
-        const d = r.date.includes('T') ? r.date.split('T')[0] : r.date;
-        return d === today;
-      });
-      if (hasRevToday && p.dateFirstSolved !== today) {
+    p.revisionHistory?.forEach((r) => {
+      const d = r.date.includes('T') ? r.date.split('T')[0] : r.date;
+      if (d === today) {
         count++;
       }
-    }
+    });
   });
   return count;
 }
@@ -183,7 +185,7 @@ export interface HeatmapDay {
 }
 
 /**
- * Build 90-day heatmap array up to today
+ * Build 90-day heatmap array up to today (counting only real user solves and revisions)
  */
 export function generate90DayHeatmap(problems: Problem[]): HeatmapDay[] {
   const today = getTodayISO();
@@ -195,13 +197,13 @@ export function generate90DayHeatmap(problems: Problem[]): HeatmapDay[] {
     dayMap.set(d, { solved: 0, revised: 0 });
   }
 
-  // Tally solves
   problems.forEach((p) => {
-    if (p.dateFirstSolved && dayMap.has(p.dateFirstSolved)) {
+    // Count first solve only for user-added problems
+    if (!isSampleProblem(p) && p.dateFirstSolved && dayMap.has(p.dateFirstSolved)) {
       const entry = dayMap.get(p.dateFirstSolved)!;
       entry.solved += 1;
     }
-    // Tally revisions
+    // Count actual revisions logged in revisionHistory
     p.revisionHistory?.forEach((r) => {
       const d = r.date.includes('T') ? r.date.split('T')[0] : r.date;
       if (dayMap.has(d)) {

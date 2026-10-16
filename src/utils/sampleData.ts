@@ -1,15 +1,13 @@
-import { Problem } from '../types/problem';
+import type { Problem } from '../types/problem';
 import { addDaysToDate, getTodayISO } from './spacedRepetition';
 
 export function getSampleProblems(): Problem[] {
   const today = getTodayISO();
   const yesterday = addDaysToDate(today, -1);
   const twoDaysAgo = addDaysToDate(today, -2);
-  const fourDaysAgo = addDaysToDate(today, -4);
   const eightDaysAgo = addDaysToDate(today, -8);
   const fourteenDaysAgo = addDaysToDate(today, -14);
   const twentyDaysAgo = addDaysToDate(today, -20);
-  const thirtyDaysAgo = addDaysToDate(today, -30);
 
   return [
     {
@@ -22,9 +20,9 @@ export function getSampleProblems(): Problem[] {
       patterns: ['Doubly Linked List', 'Hash Table'],
       confidence: 4,
       dateFirstSolved: twentyDaysAgo,
-      lastRevisionDate: sixDaysAgo(today),
+      lastRevisionDate: '',
       nextRevisionDate: addDaysToDate(today, 8),
-      revisionCount: 3,
+      revisionCount: 0,
       solveTimeMinutes: 24,
       isFavorite: true,
       createdAt: twentyDaysAgo,
@@ -76,29 +74,7 @@ class LRUCache:
             self.remove(lru)
             del self.cache[lru.key]`,
       },
-      revisionHistory: [
-        {
-          id: 'rev-1a',
-          date: twentyDaysAgo,
-          confidence: 2,
-          solveTimeMinutes: 38,
-          notes: 'Struggled with pointer updates on dummy nodes',
-        },
-        {
-          id: 'rev-1b',
-          date: fourteenDaysAgo,
-          confidence: 3,
-          solveTimeMinutes: 28,
-          notes: 'Solved smoothly, small typo in node eviction',
-        },
-        {
-          id: 'rev-1c',
-          date: sixDaysAgo(today),
-          confidence: 4,
-          solveTimeMinutes: 22,
-          notes: 'Clean O(1) implementation without referring to notes',
-        },
-      ],
+      revisionHistory: [],
     },
     {
       id: 'sample-2',
@@ -110,9 +86,9 @@ class LRUCache:
       patterns: ['Two Pointers', 'Monotonic Stack'],
       confidence: 2,
       dateFirstSolved: fourteenDaysAgo,
-      lastRevisionDate: fourDaysAgo,
+      lastRevisionDate: '',
       nextRevisionDate: addDaysToDate(today, -1), // 1 day OVERDUE!
-      revisionCount: 2,
+      revisionCount: 0,
       solveTimeMinutes: 35,
       isFavorite: true,
       createdAt: fourteenDaysAgo,
@@ -143,22 +119,7 @@ class LRUCache:
 
     return water`,
       },
-      revisionHistory: [
-        {
-          id: 'rev-2a',
-          date: fourteenDaysAgo,
-          confidence: 1,
-          solveTimeMinutes: 45,
-          notes: 'Needed to check solution to understand why smaller max boundary dictates water height',
-        },
-        {
-          id: 'rev-2b',
-          date: fourDaysAgo,
-          confidence: 2,
-          solveTimeMinutes: 35,
-          notes: 'Remembered the two pointers concept but hesitated on moving pointer after update',
-        },
-      ],
+      revisionHistory: [],
     },
     {
       id: 'sample-3',
@@ -170,9 +131,9 @@ class LRUCache:
       patterns: ['Sliding Window'],
       confidence: 3,
       dateFirstSolved: eightDaysAgo,
-      lastRevisionDate: yesterday,
+      lastRevisionDate: '',
       nextRevisionDate: today, // DUE TODAY!
-      revisionCount: 2,
+      revisionCount: 0,
       solveTimeMinutes: 18,
       isFavorite: false,
       createdAt: eightDaysAgo,
@@ -198,22 +159,7 @@ class LRUCache:
 
     return max_len`,
       },
-      revisionHistory: [
-        {
-          id: 'rev-3a',
-          date: eightDaysAgo,
-          confidence: 2,
-          solveTimeMinutes: 25,
-          notes: 'Made the classic mistake of jumping left pointer backwards without max check',
-        },
-        {
-          id: 'rev-3b',
-          date: yesterday,
-          confidence: 3,
-          solveTimeMinutes: 16,
-          notes: 'Good intuition on sliding window, completed in 16 mins',
-        },
-      ],
+      revisionHistory: [],
     },
     {
       id: 'sample-4',
@@ -224,13 +170,13 @@ class LRUCache:
       difficulty: 'Easy',
       patterns: ['In-place Reversal of LL'],
       confidence: 5,
-      dateFirstSolved: thirtyDaysAgo,
-      lastRevisionDate: twoDaysAgo,
+      dateFirstSolved: yesterday,
+      lastRevisionDate: '',
       nextRevisionDate: addDaysToDate(today, 28),
-      revisionCount: 4,
+      revisionCount: 0,
       solveTimeMinutes: 6,
       isFavorite: false,
-      createdAt: thirtyDaysAgo,
+      createdAt: yesterday,
       updatedAt: today,
       notes: {
         keyIntuition:
@@ -250,27 +196,7 @@ class LRUCache:
         curr = nxt
     return prev`,
       },
-      revisionHistory: [
-        {
-          id: 'rev-4a',
-          date: thirtyDaysAgo,
-          confidence: 4,
-          solveTimeMinutes: 10,
-        },
-        {
-          id: 'rev-4b',
-          date: fourteenDaysAgo,
-          confidence: 5,
-          solveTimeMinutes: 6,
-        },
-        {
-          id: 'rev-4c',
-          date: twoDaysAgo,
-          confidence: 5,
-          solveTimeMinutes: 5,
-          notes: 'Instant muscle memory. Can write both iterative and recursive in 3 mins.',
-        },
-      ],
+      revisionHistory: [],
     },
     {
       id: 'sample-5',
@@ -282,9 +208,9 @@ class LRUCache:
       patterns: ['Tree BFS/DFS', 'Graphs / Union Find'],
       confidence: 1,
       dateFirstSolved: twoDaysAgo,
-      lastRevisionDate: twoDaysAgo,
+      lastRevisionDate: '',
       nextRevisionDate: addDaysToDate(today, -1), // 1 day OVERDUE!
-      revisionCount: 1,
+      revisionCount: 0,
       solveTimeMinutes: 40,
       isFavorite: true,
       createdAt: twoDaysAgo,
@@ -319,19 +245,7 @@ class LRUCache:
 
     return islands`,
       },
-      revisionHistory: [
-        {
-          id: 'rev-5a',
-          date: twoDaysAgo,
-          confidence: 1,
-          solveTimeMinutes: 40,
-          notes: 'Had IndexOutOfBounds errors and confused row/col dimensions.',
-        },
-      ],
+      revisionHistory: [],
     },
   ];
-}
-
-function sixDaysAgo(today: string): string {
-  return addDaysToDate(today, -6);
 }

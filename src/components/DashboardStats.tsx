@@ -4,13 +4,14 @@ import {
   AlertTriangle,
   Brain,
   CheckCircle2,
-  TrendingUp,
   Target,
 } from 'lucide-react';
 import type { Problem } from '../types/problem';
 import {
   calculateStreak,
   diffInDays,
+  getProblemsSolvedToday,
+  getRevisionsDoneToday,
   getTodayISO,
 } from '../utils/spacedRepetition';
 
@@ -35,6 +36,8 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
 }) => {
   const today = getTodayISO();
   const streak = calculateStreak(problems);
+  const solvedToday = getProblemsSolvedToday(problems);
+  const revisionsToday = getRevisionsDoneToday(problems);
 
   let overdueCount = 0;
   let dueTodayCount = 0;
@@ -76,7 +79,7 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      {/* 1. Daily Streak */}
+      {/* 1. Daily Streak & Today's Activity */}
       <div className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-zinc-900/75 border border-slate-200/90 dark:border-zinc-800/80 shadow-xs hover:border-slate-300 dark:hover:border-zinc-700 transition-all">
         <div className="flex items-center justify-between mb-2.5">
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
@@ -91,13 +94,18 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
             {streak}
           </span>
           <span className="text-xs font-bold text-amber-600 dark:text-amber-400">
-            {streak === 1 ? 'day active' : 'days active'}
+            {streak === 1 ? 'day streak' : 'days streak'}
           </span>
         </div>
-        <p className="mt-2 text-xs text-slate-500 dark:text-zinc-400 flex items-center gap-1">
-          <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
-          <span>Consistent daily practice</span>
-        </p>
+        <div className="mt-2 flex items-center gap-2 text-[11px] text-slate-500 dark:text-zinc-400 font-mono">
+          <span>
+            <strong className="text-slate-800 dark:text-zinc-200">{solvedToday}</strong> solved today
+          </span>
+          <span>•</span>
+          <span>
+            <strong className="text-slate-800 dark:text-zinc-200">{revisionsToday}</strong> revised today
+          </span>
+        </div>
       </div>
 
       {/* 2. Spaced Repetition Due Queue */}
@@ -110,7 +118,7 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
       >
         <div className="flex items-center justify-between mb-2.5">
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
-            Revision Queue
+            Due for Revision
           </span>
           <div
             className={`h-8 w-8 rounded-xl flex items-center justify-center ${

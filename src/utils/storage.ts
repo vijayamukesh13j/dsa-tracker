@@ -10,6 +10,37 @@ export interface StorageData {
   problems: Problem[];
 }
 
+const LEGACY_SAMPLE_REV_IDS = new Set([
+  'rev-1a',
+  'rev-1b',
+  'rev-1c',
+  'rev-2a',
+  'rev-2b',
+  'rev-3a',
+  'rev-3b',
+  'rev-4a',
+  'rev-4b',
+  'rev-4c',
+  'rev-5a',
+]);
+
+function sanitizeLoadedProblems(list: Problem[]): Problem[] {
+  return list.map((p) => {
+    const cleanHistory = (p.revisionHistory || []).filter(
+      (r) => !LEGACY_SAMPLE_REV_IDS.has(r.id) && r.notes !== 'First solve logged'
+    );
+    const lastRev =
+      cleanHistory.length > 0 ? cleanHistory[cleanHistory.length - 1].date : '';
+
+    return {
+      ...p,
+      revisionHistory: cleanHistory,
+      revisionCount: cleanHistory.length,
+      lastRevisionDate: lastRev,
+    };
+  });
+}
+
 /**
  * Load problems from LocalStorage or initialize with sample data
  */
@@ -22,11 +53,16 @@ export function loadProblemsFromStorage(): Problem[] {
       return initial;
     }
     const parsed = JSON.parse(raw);
-    if (Array.isArray(parsed)) {
-      return parsed;
-    }
-    if (parsed && Array.isArray(parsed.problems)) {
-      return parsed.problems;
+    const rawList: Problem[] | null = Array.isArray(parsed)
+      ? parsed
+      : parsed && Array.isArray(parsed.problems)
+      ? parsed.problems
+      : null;
+
+    if (rawList) {
+      const cleaned = sanitizeLoadedProblems(rawList);
+      saveProblemsToStorage(cleaned);
+      return cleaned;
     }
     return getSampleProblems();
   } catch (error) {

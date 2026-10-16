@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <defs>
+    <linearGradient id="dsaGrad" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="50%" stop-color="#059669" />
+      <stop offset="100%" stop-color="#0d9488" />
+    </linearGradient>
+    <linearGradient id="nodeGlow" x1="16" y1="12" x2="48" y2="52" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#d1fae5" />
+    </linearGradient>
+  </defs>
+
+  <!-- Rounded Squircle Background -->
+  <rect x="2" y="2" width="60" height="60" rx="16" fill="url(#dsaGrad)" />
+  <rect x="3" y="3" width="58" height="58" rx="15" stroke="white" stroke-opacity="0.22" stroke-width="2" />
+
+  <!-- Binary Tree / Graph Edges -->
+  <path d="M32 19L20 35" stroke="white" stroke-width="4" stroke-linecap="round" stroke-opacity="0.9" />
+  <path d="M32 19L44 35" stroke="white" stroke-width="4" stroke-linecap="round" stroke-opacity="0.9" />
+  <path d="M20 35L28 47" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-opacity="0.75" />
+
+  <!-- Spaced Repetition Orbit Arc -->
+  <path d="M48 23C51.5 28.5 51.5 36.5 47 42.5" stroke="#a7f3d0" stroke-width="3" stroke-linecap="round" stroke-dasharray="3 4" />
+
+  <!-- Root Node -->
+  <circle cx="32" cy="18" r="6.5" fill="url(#nodeGlow)" />
+  <circle cx="32" cy="18" r="2.5" fill="#059669" />
+
+  <!-- Left Child Node -->
+  <circle cx="19" cy="36" r="5.5" fill="url(#nodeGlow)" />
+  <circle cx="19" cy="36" r="2" fill="#059669" />
+
+  <!-- Right Child Node -->
+  <circle cx="45" cy="36" r="5.5" fill="url(#nodeGlow)" />
+  <circle cx="45" cy="36" r="2" fill="#059669" />
+
+  <!-- Leaf / Mastery Node -->
+  <circle cx="29" cy="48" r="4.5" fill="#fef08a" />
+</svg>
